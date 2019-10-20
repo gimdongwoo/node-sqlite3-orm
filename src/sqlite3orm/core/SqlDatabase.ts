@@ -9,7 +9,7 @@ import {
   OPEN_READWRITE,
   Statement,
   verbose as sqlverbose,
-} from 'sqlite3';
+} from '../sqlite3';
 
 import { SqlDatabaseSettings } from './SqlDatabaseSettings';
 import { SqlRunResult, SqlStatement } from './SqlStatement';
@@ -442,6 +442,14 @@ ${sql}`);
     }
     const promises: Promise<void>[] = [];
     try {
+      /* istanbul ignore else */
+      if (settings.cipher_compatibility) {
+        this._addPragmaSetting(promises, 'cipher_compatibility', settings.cipher_compatibility);
+      }
+      /* istanbul ignore else */
+      if (settings.cipher_encrypt_key) {
+        promises.push(this.exec(`PRAGMA key = '${settings.cipher_encrypt_key}'`));
+      }
       /* istanbul ignore else */
       if (settings.journalMode) {
         this._addPragmaSettings(promises, 'journal_mode', settings.journalMode);

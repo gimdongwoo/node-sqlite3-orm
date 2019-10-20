@@ -55,4 +55,14 @@ export interface SqlDatabaseSettings {
    *  SERIALIZE | PARALLELIZE
    */
   executionMode?: string;
+
+  /*
+   *  SQL CIPHER | version
+   */
+  cipher_compatibility?: number;
+
+  /*
+   *  SQL CIPHER | encrypt key
+   */
+  cipher_encrypt_key?: string;
 }

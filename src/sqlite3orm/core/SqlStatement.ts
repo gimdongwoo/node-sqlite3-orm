@@ -1,6 +1,6 @@
 // import * as core from './core';
 
-import { Statement } from 'sqlite3';
+import { Statement } from '../sqlite3';
 
 export interface SqlRunResult {
   lastID: number;

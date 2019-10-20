@@ -2,8 +2,8 @@
   "name": "sqlite3orm",
   "version": "2.4.12",
   "description": "ORM for sqlite3 and TypeScript/JavaScript",
-  "main": "./index.js",
-  "types": "./index.d.ts",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "tags": [
     "javascript",
     "typescript",
@@ -30,6 +30,7 @@
     "clean": "rimraf dist/*",
     "build": "tsc -p tsconfig.json",
     "rebuild": "npm run clean && npm run build",
+    "prepublish": "npm run rebuild",
     "lint": "tslint -p tsconfig.json -c tslint.json",
     "test:run": "node spec/jasmine-runner.js",
     "test": "npm run rebuild && npm run test:run",
@@ -50,7 +51,7 @@
   "dependencies": {
     "debug": "^4.1.1",
     "reflect-metadata": "^0.1.13",
-    "sqlite3": "^4.1.0"
+    "@journeyapps/sqlcipher": "^4.0.0"
   },
   "devDependencies": {
     "@compodoc/compodoc": "^1.1.10",

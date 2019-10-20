@@ -16,6 +16,8 @@ const debug = _dbg('sqlite3orm:pool');
  * @class SqlConnectionPool
  */
 export class SqlConnectionPool {
+  public readonly name: string;
+
   private databaseFile?: string;
 
   private mode: number;
@@ -43,7 +45,8 @@ export class SqlConnectionPool {
    * Creates an instance of SqlConnectionPool.
    *
    */
-  constructor(public readonly name: string = '') {
+  constructor(name: string = '') {
+    this.name = name;
     this.databaseFile = undefined;
     this.mode = SQL_OPEN_DEFAULT;
     this.inUse = new Set<SqlConnectionPoolDatabase>();
