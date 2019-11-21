@@ -150,6 +150,7 @@ export class SqlDatabase {
       }
       // tslint:disable-next-line: only-arrow-functions
       debug(`${this.dbId}: sql: ${sql}`);
+      // eslint-disable-next-line @typescript-eslint/no-this-alias
       const self = this;
       this.db.run(sql, params, function(err: Error): void {
         // do not use arrow function for this callback
