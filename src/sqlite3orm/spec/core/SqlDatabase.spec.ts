@@ -49,9 +49,9 @@ describe('test SqlDatabase', () => {
   it('expect basic dmls to succeed', async (done) => {
     try {
       // insert id=1 should work
-      let res = await sqldb.run("INSERT INTO TEST (id,col) values (1,'testvalue 1/1')");
+      const res = await sqldb.run("INSERT INTO TEST (id,col) values (1,'testvalue 1/1')");
       expect(res.lastID).toBe(1);
-      let row = await sqldb.get('SELECT col FROM TEST WHERE id=:id', { ':id': 1 });
+      const row = await sqldb.get('SELECT col FROM TEST WHERE id=:id', { ':id': 1 });
       expect(row.col).toBe('testvalue 1/1');
 
       // insert id=1 should fail
@@ -67,7 +67,7 @@ describe('test SqlDatabase', () => {
     }
     // insert without id should work
     try {
-      let res = await sqldb.run("INSERT INTO TEST (col) values ('testvalue 2')");
+      const res = await sqldb.run("INSERT INTO TEST (col) values ('testvalue 2')");
       expect(res.lastID).toBe(2);
     } catch (err) {
       fail(err);
@@ -75,7 +75,7 @@ describe('test SqlDatabase', () => {
 
     // select without parameter should work
     try {
-      let res = await sqldb.all('SELECT id, col FROM TEST order by id');
+      const res = await sqldb.all('SELECT id, col FROM TEST order by id');
       expect(res.length).toBeGreaterThan(1);
       expect(res[0].id).toBe(0);
       expect(res[0].col).toBe('testvalue 0');
@@ -89,9 +89,9 @@ describe('test SqlDatabase', () => {
 
     try {
       // update should work
-      let res = await sqldb.run('UPDATE TEST set col = ? WHERE id=?', ['testvalue 1/2', 1]);
+      const res = await sqldb.run('UPDATE TEST set col = ? WHERE id=?', ['testvalue 1/2', 1]);
       expect(res.changes).toBe(1);
-      let row = await sqldb.get('SELECT col FROM TEST WHERE id=?', 1);
+      const row = await sqldb.get('SELECT col FROM TEST WHERE id=?', 1);
       expect(row.col).toBe('testvalue 1/2');
     } catch (err) {
       fail(err);
@@ -99,20 +99,20 @@ describe('test SqlDatabase', () => {
 
     try {
       // prepared update should work
-      let stmt = await sqldb.prepare('UPDATE TEST set col = $col WHERE ID=$id');
-      let res = await stmt.run({ $id: 1, $col: 'testvalue 1/3' });
+      const stmt = await sqldb.prepare('UPDATE TEST set col = $col WHERE ID=$id');
+      const res = await stmt.run({ $id: 1, $col: 'testvalue 1/3' });
       expect(res.changes).toBe(1);
       await stmt.finalize();
-      let row = await sqldb.get('SELECT col FROM TEST WHERE id=?', 1);
+      const row = await sqldb.get('SELECT col FROM TEST WHERE id=?', 1);
       expect(row.col).toBe('testvalue 1/3');
     } catch (err) {
       fail(err);
     }
 
     try {
-      let res2: any[] = [];
+      const res2: any[] = [];
       // select using parameter should work
-      let count = await sqldb.each(
+      const count = await sqldb.each(
         'SELECT id, col FROM TEST WHERE id >= ? order by id',
         [0],
         (err, row) => {
@@ -138,13 +138,13 @@ describe('test SqlDatabase', () => {
   // ---------------------------------------------
   it('expect transaction to commit on end', async (done) => {
     try {
-      let oldver = await sqldb.getUserVersion();
+      const oldver = await sqldb.getUserVersion();
 
       await sqldb.transactionalize(async () => {
         await sqldb.setUserVersion(oldver + 3);
       });
 
-      let newver = await sqldb.getUserVersion();
+      const newver = await sqldb.getUserVersion();
       expect(oldver + 3).toBe(newver);
     } catch (err) {
       fail(err);
@@ -155,7 +155,7 @@ describe('test SqlDatabase', () => {
   // ---------------------------------------------
   it('expect transaction to rollback on error', async (done) => {
     try {
-      let oldver = await sqldb.getUserVersion();
+      const oldver = await sqldb.getUserVersion();
 
       try {
         await sqldb.transactionalize(async () => {
@@ -164,7 +164,7 @@ describe('test SqlDatabase', () => {
         });
         fail('unexpected');
       } catch (err2) {
-        let newver = await sqldb.getUserVersion();
+        const newver = await sqldb.getUserVersion();
         expect(oldver).toBe(newver);
       }
     } catch (err) {
@@ -176,10 +176,10 @@ describe('test SqlDatabase', () => {
   // ---------------------------------------------
   it('expect getting and setting PRAGMA user_version to succeed', async (done) => {
     try {
-      let oldver = await sqldb.getUserVersion();
+      const oldver = await sqldb.getUserVersion();
       expect(oldver).toBe(0);
       await sqldb.setUserVersion(oldver + 3);
-      let newver = await sqldb.getUserVersion();
+      const newver = await sqldb.getUserVersion();
       expect(newver).toBe(oldver + 3);
     } catch (err) {
       fail(err);
@@ -190,7 +190,7 @@ describe('test SqlDatabase', () => {
   // ---------------------------------------------
   it('expect getting PRAGMA cipher_version to succeed (can be undefined)', async (done) => {
     try {
-      let version = await sqldb.getCipherVersion();
+      const version = await sqldb.getCipherVersion();
     } catch (err) {
       fail(err);
     }
@@ -415,8 +415,8 @@ describe('test SqlDatabase when sqlcipher IS available', () => {
       sqldb = new SqlDatabase();
 
       await sqldb.open(CIPHER_DB, SQL_OPEN_READWRITE, {
-        cipherCompatibility: CIPHER_COMPATIBILITY,
-        key: CIPHER_KEY,
+        cipher_compatibility: CIPHER_COMPATIBILITY,
+        cipher_encrypt_key: CIPHER_KEY,
       });
       sqlcipherVersion = await sqldb.getCipherVersion();
     } catch (err) {
@@ -430,7 +430,7 @@ describe('test SqlDatabase when sqlcipher IS available', () => {
       return;
     }
     try {
-      let res = await sqldb.all('SELECT id, col FROM TEST order by id');
+      const res = await sqldb.all('SELECT id, col FROM TEST order by id');
       expect(res.length).toBeTruthy();
       expect(res[0].id).toBe(1);
       expect(res[0].col).toBe('my encrypted test data');
@@ -449,8 +449,8 @@ describe('test SqlDatabase when sqlcipher IS NOT available', () => {
       sqldb = new SqlDatabase();
 
       await sqldb.open(CIPHER_DB, SQL_OPEN_READWRITE, {
-        cipherCompatibility: CIPHER_COMPATIBILITY,
-        key: CIPHER_KEY,
+        cipher_compatibility: CIPHER_COMPATIBILITY,
+        cipher_encrypt_key: CIPHER_KEY,
       });
       sqlcipherVersion = await sqldb.getCipherVersion();
     } catch (err) {

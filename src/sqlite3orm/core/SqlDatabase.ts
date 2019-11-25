@@ -57,7 +57,9 @@ export class SqlDatabase {
    * Creates an instance of SqlDatabase.
    *
    */
-  constructor() {}
+  constructor() {
+    //
+  }
 
   /**
    * Open a database connection
@@ -305,9 +307,8 @@ ${sql}`);
         reject(new Error('database connection not open'));
         return;
       }
-      let dbstmt: Statement;
       debug(`${this.dbId}: sql: ${sql}`);
-      dbstmt = this.db.prepare(sql, params, (err) => {
+      const dbstmt: Statement = this.db.prepare(sql, params, (err) => {
         if (err) {
           debug(`${this.dbId}: failed sql: ${err.message}
 ${sql}`);
@@ -441,14 +442,6 @@ ${sql}`);
     }
     const promises: Promise<void>[] = [];
     try {
-      /* istanbul ignore if */
-      if (settings.cipherCompatibility) {
-        this._addPragmaSetting(promises, 'cipher_compatibility', settings.cipherCompatibility);
-      }
-      /* istanbul ignore if */
-      if (settings.key) {
-        this._addPragmaSetting(promises, 'key', settings.key);
-      }
       /* istanbul ignore else */
       if (settings.cipher_compatibility) {
         this._addPragmaSetting(promises, 'cipher_compatibility', settings.cipher_compatibility);
