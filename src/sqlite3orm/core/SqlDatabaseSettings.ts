@@ -6,6 +6,7 @@
 export interface SqlDatabaseSettings {
   /*
    * PRAGMA schema.journal_mode = DELETE | TRUNCATE | PERSIST | MEMORY | WAL | OFF
+   *  for multiple schemas use e.g [ 'temp.OFF', 'main.WAL' ]
    */
   journalMode?: string | string[];
   /*
@@ -14,6 +15,7 @@ export interface SqlDatabaseSettings {
   busyTimeout?: number;
   /*
    * PRAGMA schema.synchronous = OFF | NORMAL | FULL | EXTRA;
+   *  for multiple schemas use e.g [ 'temp.OFF', 'main.FULL' ]
    */
   synchronous?: string | string[];
   /*
@@ -48,6 +50,7 @@ export interface SqlDatabaseSettings {
 
   /*
    * PRAGMA schema.secure_delete = TRUE | FALSE | FAST
+   *  for multiple schemas use e.g [ 'temp.OFF', 'main.FAST' ]
    */
   secureDelete?: string | string[];
 

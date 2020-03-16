@@ -57,7 +57,9 @@ export class SqlDatabase {
    * Creates an instance of SqlDatabase.
    *
    */
-  constructor() {}
+  constructor() {
+    //
+  }
 
   /**
    * Open a database connection
@@ -67,11 +69,7 @@ export class SqlDatabase {
    * SQL_OPEN_READONLY | SQL_OPEN_READWRITE
    * @returns A promise
    */
-  public async open(
-    databaseFile: string,
-    mode?: number,
-    settings?: SqlDatabaseSettings,
-  ): Promise<void> {
+  public open(databaseFile: string, mode?: number, settings?: SqlDatabaseSettings): Promise<void> {
     return new Promise<void>((resolve, reject) => {
       const db = new Database(databaseFile, mode || SQL_OPEN_DEFAULT, (err) => {
         if (err) {
@@ -150,6 +148,7 @@ export class SqlDatabase {
       }
       // tslint:disable-next-line: only-arrow-functions
       debug(`${this.dbId}: sql: ${sql}`);
+      // eslint-disable-next-line @typescript-eslint/no-this-alias
       const self = this;
       this.db.run(sql, params, function(err: Error): void {
         // do not use arrow function for this callback
@@ -308,9 +307,8 @@ ${sql}`);
         reject(new Error('database connection not open'));
         return;
       }
-      let dbstmt: Statement;
       debug(`${this.dbId}: sql: ${sql}`);
-      dbstmt = this.db.prepare(sql, params, (err) => {
+      const dbstmt: Statement = this.db.prepare(sql, params, (err) => {
         if (err) {
           debug(`${this.dbId}: failed sql: ${err.message}
 ${sql}`);
@@ -412,17 +410,8 @@ ${sql}`);
    * Get the 'user_version' from the database
    * @returns A promise of the user version number
    */
-  public async getUserVersion(): Promise<number> {
-    let userVersion = 0;
-    try {
-      const res = await this.get('PRAGMA user_version');
-      userVersion = res.user_version;
-    } catch (e) {
-      // NOTE: should not happen
-      /* istanbul ignore next */
-      return Promise.reject(e);
-    }
-    return Promise.resolve(userVersion);
+  public getUserVersion(): Promise<number> {
+    return this.get('PRAGMA user_version').then((res) => res.user_version);
   }
 
   /**
@@ -435,6 +424,17 @@ ${sql}`);
     return this.exec(`PRAGMA user_version = ${newver}`);
   }
 
+  /**
+   * Get the 'cipher_version' from the database
+   * @returns A promise of the cipher version
+   */
+  public getCipherVersion(): Promise<string | undefined> {
+    return this.get('PRAGMA cipher_version').then((res) =>
+      /* istanbul ignore next */ res ? res.cipher_version : undefined,
+    );
+  }
+
+  // tslint:disable-next-line: cyclomatic-complexity
   protected applySettings(settings: SqlDatabaseSettings): Promise<void> {
     /* istanbul ignore if */
     if (!this.db) {
@@ -452,7 +452,7 @@ ${sql}`);
       }
       /* istanbul ignore else */
       if (settings.journalMode) {
-        this._addPragmaSettings(promises, 'journal_mode', settings.journalMode);
+        this._addPragmaSchemaSettings(promises, 'journal_mode', settings.journalMode);
       }
       /* istanbul ignore else */
       if (settings.busyTimeout) {
@@ -460,7 +460,7 @@ ${sql}`);
       }
       /* istanbul ignore else */
       if (settings.synchronous) {
-        this._addPragmaSettings(promises, 'synchronous', settings.synchronous);
+        this._addPragmaSchemaSettings(promises, 'synchronous', settings.synchronous);
       }
       /* istanbul ignore else */
       if (settings.caseSensitiveLike) {
@@ -492,7 +492,7 @@ ${sql}`);
       }
       /* istanbul ignore else */
       if (settings.secureDelete) {
-        this._addPragmaSettings(promises, 'secure_delete', settings.secureDelete);
+        this._addPragmaSchemaSettings(promises, 'secure_delete', settings.secureDelete);
       }
       if (settings.executionMode) {
         switch (settings.executionMode.toUpperCase()) {
@@ -519,17 +519,17 @@ ${sql}`);
     return Promise.resolve();
   }
 
-  protected _addPragmaSettings(
+  protected _addPragmaSchemaSettings(
     promises: Promise<void>[],
     pragma: string,
     setting: string | string[],
   ): void {
     if (Array.isArray(setting)) {
       setting.forEach((val) => {
-        this._addPragmaSetting(promises, pragma, val);
+        this._addPragmaSetting(promises, pragma, val, true);
       });
     } else {
-      this._addPragmaSetting(promises, pragma, setting);
+      this._addPragmaSetting(promises, pragma, setting, true);
     }
   }
 
@@ -537,21 +537,28 @@ ${sql}`);
     promises: Promise<void>[],
     pragma: string,
     setting: string | number,
+    schemaSupport: boolean = false,
   ): void {
     if (typeof setting === 'number') {
       promises.push(this.exec(`PRAGMA ${pragma} = ${setting}`));
       return;
     }
-    const splitted = setting.split('.');
-    switch (splitted.length) {
-      case 1:
-        promises.push(this.exec(`PRAGMA ${pragma} = ${setting.toUpperCase()}`));
-        return;
-      case 2:
-        promises.push(this.exec(`PRAGMA ${splitted[0]}.${pragma} = ${splitted[1].toUpperCase()}`));
-        return;
+    if (schemaSupport) {
+      const splitted = setting.split('.');
+      switch (splitted.length) {
+        case 1:
+          promises.push(this.exec(`PRAGMA ${pragma} = ${setting.toUpperCase()}`));
+          return;
+        case 2:
+          promises.push(
+            this.exec(`PRAGMA ${splitted[0]}.${pragma} = ${splitted[1].toUpperCase()}`),
+          );
+          return;
+      }
+      throw new Error(`failed to read ${pragma} setting: ${setting.toString()}`);
+    } else {
+      promises.push(this.exec(`PRAGMA ${pragma} = ${setting}`));
     }
-    throw new Error(`failed to read ${pragma} setting: ${setting.toString()}`);
   }
 
   /**
